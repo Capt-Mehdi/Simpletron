@@ -1,0 +1,526 @@
+//-----------------------------------------------------------Mohammad Mehdi--------------------------------------------------//
+//------------------------------------------------------------SP22-BCS-020---------------------------------------------------//
+import javafx.application.Application;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+import javafx.scene.layout.BorderPane;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.geometry.Pos;
+import javafx.stage.FileChooser;
+import javafx.scene.layout.StackPane;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.geometry.Insets;
+import javafx.scene.Group;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.ToggleButton;
+
+
+import java.util.Scanner;
+import java.util.Formatter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.io.FileNotFoundException;
+import java.util.InputMismatchException;
+import java.util.Optional;
+
+
+public class SP22_BCS_020 extends Application{
+
+//---------------------------------------------------------------Scene Declaration--------------------------------------------------------------//
+
+Scene scene1;
+
+//----------------------------------------------------------JavaFX Variable Declarations-------------------------------------------------------//
+
+HBox hb = new HBox(10);
+HBox root = new HBox(10);
+HBox InpPane ;
+
+Label Accu = new Label("Accumulator");
+        TextField AccField = new TextField();
+Label Count = new Label("Ins. Count");
+        TextField CountField = new TextField();
+Label Reg = new Label("Ins. Reg");
+        TextField RegField = new TextField();
+Label Opcod = new Label("OpCode");
+        TextField OpcodField = new TextField();
+Label Opran = new Label("Operand");
+        TextField OpranField = new TextField();
+Dialog<Integer> InpDialog = new Dialog<>();
+
+
+ToggleGroup T_group = new ToggleGroup();
+RadioButton R_But1 = new RadioButton("Execute One Instruction");
+RadioButton R_But2 = new RadioButton("Execute Whole Program");
+
+//------------------------------------------------------------Simple Java Variables Declarations-----------------------------------------------//
+
+boolean RadioSetting;
+boolean ProgramLoadingChecker = false;
+int operand = 0;
+int opecode = 0;
+int x =0;
+int accumulator = 0;
+int accumulator_counter = 0;
+int instruction_counter = 0;
+public int[] Memory = new int[100];
+public Scanner fin;
+public static Scanner cin = new Scanner(System.in);
+int memoryArrayFillCounter = 0;
+@Override
+    public void start(Stage primaryStage){
+        
+        primaryStage.setTitle("Simpletron GUI");
+        
+        R_But1.setToggleGroup(T_group);
+        R_But2.setToggleGroup(T_group);
+
+        R_But1.setOnAction(e ->{
+            RadioSetting = false;
+            });
+
+        R_But2.setOnAction(e->{
+            RadioSetting = true;
+            });
+
+
+        TextArea Ins_Area = new TextArea();
+        
+		//-------------------------------------------- Load Button Code ---------------------------------------------------//
+        Button B1 = new Button("Load Program");
+        
+        B1.setOnAction(e->{
+        ProgramLoadingChecker = true;
+        FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(primaryStage);
+        try{
+            fin = new Scanner(Paths.get(file.getAbsolutePath()));
+            for(int i = 0; i < Memory.length; i++){
+                Memory[i] = 0;
+            }
+			while(fin.hasNext()){
+				Memory[memoryArrayFillCounter] = fin.nextInt();
+				memoryArrayFillCounter++;
+			}
+                         //-------------------------------Text Area-----------------------------------------//
+            for (int j = 1; j <= Memory.length; j++) {
+                String formattedNumber = String.format("%04d", Memory[j-1]);
+                Ins_Area.appendText(formattedNumber+"  ");
+                    if((j % 10 == 0)&&(j != 0)){
+                        Ins_Area.appendText("\n");
+                }
+            }        
+        }
+            catch(InputMismatchException | FileNotFoundException E){
+                System.err.print("Input File Is Not Same...");
+            }
+		catch(Exception error){
+			error.printStackTrace();
+		}
+        });
+        
+
+        //--------------------------------------------------Execution Button------------------------------------------------------------------------//
+        Button B2 = new Button("Execute Next Instruction");
+        
+        B2.setOnAction(e->{
+        if(ProgramLoadingChecker){
+			//Input & Output...
+            if(RadioSetting){
+            for(int i = 0; i <= Memory.length; i++){
+		
+         	operand = Memory[i]%100;
+			opecode = Memory[i]/100;
+
+			if(opecode == 10 ){
+				
+				
+                InpDialog.setTitle("Message");
+                InpDialog.setHeaderText("Enter Any Number");
+                TextField text = new TextField();
+                Button butSub = new Button("Submit");
+                
+                butSub.setOnAction(E ->{
+                Memory[operand] = Integer.parseInt(text.getText());
+                InpDialog.setResult(Memory[operand]);
+                InpDialog.close();
+                });
+                InpPane = new HBox(10, text,butSub); 
+                InpDialog.getDialogPane().setContent(InpPane);
+                Optional<Integer> result = InpDialog.showAndWait();
+                instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+				
+		    }
+			    
+			
+			else if(opecode == 11){
+				
+                try{
+                Dialog<ButtonType> RDialog =  new Dialog<>();  //--------------Dailog Box Code for The Result....
+				RDialog.setHeaderText("The Result is "+ Memory[operand]);
+                RDialog.setTitle("Result...");
+                RDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = RDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+                }
+                catch(InputMismatchException T){
+				Dialog<ButtonType> WIDialog =  new Dialog<>();  //--------------Dailog Box Code for The Termination......
+				WIDialog.setHeaderText("Please Enter A Number Not A String or Any Character.....");
+                WIDialog.setTitle("Wrong Input Message......");
+                WIDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = WIDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+                
+                }
+
+                instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			//Load & Store...
+			else if(opecode == 20){
+				accumulator = Memory[operand];
+				accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 21){
+				Memory[operand] = accumulator;
+				instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			//Arithmetic Operations...
+			else if(opecode == 30){
+				accumulator = accumulator + Memory[operand];
+				accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 31){
+				accumulator =  Memory[operand] - accumulator;
+				accumulator_counter ++;
+				instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 32){
+				accumulator = accumulator * Memory[operand];
+			    accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));	
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));		
+            }
+			
+			else if(opecode == 33){
+				accumulator =  Memory[operand] / accumulator;
+			    accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			    }
+			
+			//Transfer of Control...
+			else if(opecode == 40){
+				i = operand;
+				instruction_counter ++;	
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 41 ){
+				instruction_counter ++;
+				if(accumulator < 0){
+				i = operand - 1;
+				}
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 42){
+
+				instruction_counter ++;
+			    
+				if(accumulator == 0){					
+				i = operand - 1;
+				}	
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 43){
+				Dialog<ButtonType> HaultDialog =  new Dialog<>();  //--------------Dailog Box Code for The Termination......
+				HaultDialog.setHeaderText("The Program Is Terminated");
+                HaultDialog.setTitle("Message......");
+                HaultDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = HaultDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+				break;
+			}
+                for(int y = 0; y < 1000; y++){
+                Ins_Area.deletePreviousChar();
+                }
+                for (int j = 1; j <= Memory.length; j++) {
+                String formattedNumber = String.format("%04d", Memory[j-1]);
+                Ins_Area.appendText(formattedNumber+"  ");
+                if((j % 10 == 0)&&(j != 0)){
+                    Ins_Area.appendText("\n");
+                }
+            }
+        }
+    }
+    else
+    {
+        
+
+			operand = Memory[x]%100;
+			opecode = Memory[x]/100;
+
+			if(opecode == 10 ){
+				
+				
+                InpDialog.setTitle("Message");
+                InpDialog.setHeaderText("Enter Any Number");
+                TextField text = new TextField();
+                Button butSub = new Button("Submit");
+                
+                butSub.setOnAction(E ->{
+                Memory[operand] = Integer.parseInt(text.getText());
+                InpDialog.setResult(Memory[operand]);
+                InpDialog.close();
+                });
+                InpPane = new HBox(10, text,butSub); 
+                InpDialog.getDialogPane().setContent(InpPane);
+                Optional<Integer> result = InpDialog.showAndWait();
+                instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+				
+		    }
+			    
+			
+			else if(opecode == 11){
+                try{
+                Dialog<ButtonType> RDialog =  new Dialog<>();  //--------------Dailog Box Code for The Result....
+				RDialog.setHeaderText("The Result is "+ Memory[operand]);
+                RDialog.setTitle("Result...");
+                RDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = RDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+                }
+                catch(InputMismatchException T){
+				Dialog<ButtonType> WIDialog =  new Dialog<>();  //--------------Dailog Box Code for The Termination......
+				WIDialog.setHeaderText("Please Enter A Number Not A String or Any Character.....");
+                WIDialog.setTitle("Wrong Input Message......");
+                WIDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = WIDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+
+                instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			    }
+            }
+			//Load & Store...
+			else if(opecode == 20){
+				accumulator = Memory[operand];
+				accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 21){
+				Memory[operand] = accumulator;
+				instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			//Arithmetic Operations...
+			else if(opecode == 30){
+				accumulator = accumulator + Memory[operand];
+				accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 31){
+				accumulator =  Memory[operand] - accumulator;
+				accumulator_counter ++;
+				instruction_counter ++;
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 32){
+				accumulator = accumulator * Memory[operand];
+			    accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));	
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));		
+            }
+			
+			else if(opecode == 33){
+				accumulator =  Memory[operand] / accumulator;
+			    accumulator_counter ++;
+				instruction_counter ++;
+                AccField.setText(String.valueOf(accumulator));
+                CountField.setText(String.valueOf(instruction_counter));
+                RegField.setText(String.valueOf(accumulator_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			    }
+			
+			//Transfer of Control...
+			else if(opecode == 40){
+				x = operand;
+				instruction_counter ++;	
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 41 ){
+				instruction_counter ++;
+				if(accumulator < 0){
+				x = operand - 1;
+				}
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 42){
+
+				instruction_counter ++;
+			    
+				if(accumulator == 0){					
+				x = operand - 1;
+				}	
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+			}
+			else if(opecode == 43){
+	            Dialog<ButtonType> HaultDialog =  new Dialog<>();  //--------------Dailog Box Code for The Termination......
+				HaultDialog.setHeaderText("The Program Is Terminated");
+                HaultDialog.setTitle("Message......");
+                HaultDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+                Optional<ButtonType> result = HaultDialog.showAndWait();
+                if (result.isPresent() && result.get() == ButtonType.OK){}
+                CountField.setText(String.valueOf(instruction_counter));
+                OpcodField.setText(String.valueOf(opecode));
+                OpranField.setText(String.valueOf(operand));
+				System.exit(0);
+			}
+            for(int y = 0; y < 1000; y++){
+            Ins_Area.deletePreviousChar();
+            }
+            for (int j = 1; j <= Memory.length; j++) {
+                String formattedNumber = String.format("%04d", Memory[j-1]);
+                Ins_Area.appendText(formattedNumber+"  ");
+                if((j % 10 == 0)&&(j != 0)){
+                    Ins_Area.appendText("\n");
+                }
+            }
+        x++;
+        }
+        }
+        else{
+            Dialog<ButtonType> CDialog =  new Dialog<>();  //--------------Dailog Box Shown After The Pressing The Execution Button Without Giving The Instruction File......
+		    CDialog.setHeaderText("The Program File is Not Loaded.\nPlease Load The File First.");
+            CDialog.setTitle("Message......");
+            CDialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+            Optional<ButtonType> result = CDialog.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK){}
+        }
+  
+    });
+        
+
+        //---------------------------------------------------Layout Creation--------------------------------------------------------------------------------//
+        
+        AccField.setPrefSize(40, 20);
+        CountField.setPrefSize(40, 20);
+        RegField.setPrefSize(40, 20);
+        OpcodField.setPrefSize(40, 20);
+        OpranField.setPrefSize(40, 20);
+        Ins_Area.setStyle("-fx-font-size: 13pt;");
+
+
+        root.getChildren().addAll(Accu, AccField,
+								  Count, CountField, 
+								  Reg, RegField, 
+								  Opcod, OpcodField,
+								  Opran, OpranField);
+		root.setAlignment(Pos.CENTER);
+
+        BorderPane P_Layout = new BorderPane();
+        hb.getChildren().addAll(B1,B2,R_But1,R_But2);
+		hb.setAlignment(Pos.CENTER);
+        P_Layout.setBottom(hb);
+
+        
+      
+        P_Layout.setTop(root);
+        
+        P_Layout.setCenter(Ins_Area);
+
+
+        scene1 = new Scene(P_Layout, 700, 350);
+        primaryStage.setScene(scene1);
+		primaryStage.show();
+    }
+}
